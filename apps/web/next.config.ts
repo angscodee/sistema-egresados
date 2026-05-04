@@ -6,32 +6,18 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../../'),
-  webpack: (config, { isServer }) => {
-    // Prevent webpack from bundling API-only packages that contain
-    // NestJS / Prisma decorators — these are type-only imports erased by TS
+  webpack: (config) => {
+    // Point ALL imports from @egresados/api to a zero-dependency stub.
+    // The stub exports `AppRouter` as `any` — type safety is preserved
+    // locally via tsconfig paths, but webpack never bundles NestJS/Prisma.
+    const stub = path.resolve(__dirname, '../api/src/trpc/app-router.type.ts');
     config.resolve.alias = {
       ...config.resolve.alias,
-      // Redirect the API trpc types import to our standalone types file
-      '@egresados/api/trpc/types': path.resolve(
-        __dirname,
-        '../api/src/trpc/router.types.ts',
-      ),
-      '@egresados/api/trpc': path.resolve(
-        __dirname,
-        '../api/src/trpc/router.types.ts',
-      ),
+      '@egresados/api/trpc/types': stub,
+      '@egresados/api/trpc': stub,
+      // Catch any direct import of the api package
+      '@egresados/api': stub,
     };
-
-    // Exclude NestJS and Prisma from the client bundle
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
-
     return config;
   },
 };

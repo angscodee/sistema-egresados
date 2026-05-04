@@ -20,9 +20,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@egresados/api/trpc/types": ["../api/src/trpc/router.types.ts"],
-      "@egresados/api/trpc": ["../api/src/trpc/router.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

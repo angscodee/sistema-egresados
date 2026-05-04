@@ -1,5 +1,8 @@
 import { createTRPCReact } from '@trpc/react-query';
-import type { AppRouter } from '@egresados/api/trpc/types';
+// This import is resolved by webpack alias to a zero-dep stub in production.
+// Locally (dev) it resolves to the real AppRouter via tsconfig paths.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AppRouter = any;
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -8,12 +11,6 @@ export function getTrpcUrl() {
   return `${api}/trpc`;
 }
 
-/**
- * Auth headers for tRPC requests.
- * The HttpOnly cookie `auth_token` is sent automatically via `credentials: 'include'`
- * in the TRPCProvider fetch config, so no Authorization header is needed.
- * This function is kept for backward compatibility with any direct fetch calls.
- */
 export function getAuthHeaders(): Record<string, string> {
   return {};
 }
