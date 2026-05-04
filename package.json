@@ -1,0 +1,29 @@
+{
+  "name": "gestion-egresados-monorepo",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "npm run prisma:generate -w @egresados/api",
+    "db:migrate": "npm run prisma:migrate -w @egresados/api",
+    "db:push": "npm run prisma:push -w @egresados/api",
+    "db:seed": "npm run prisma:seed -w @egresados/api",
+    "worker": "turbo run worker --filter=@egresados/api"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

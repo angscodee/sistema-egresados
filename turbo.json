@@ -1,0 +1,28 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "outputs": ["coverage/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "worker": {
+      "cache": false,
+      "persistent": true
+    },
+    "prisma:generate": {
+      "cache": false,
+      "outputs": ["node_modules/.prisma/**", "node_modules/@prisma/client/**"]
+    }
+  }
+}

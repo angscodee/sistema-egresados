@@ -1,0 +1,226 @@
+name: egresados
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-egresados}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-egresados_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-egresados}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-egresados} -d $${POSTGRES_DB:-egresados} || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-egresados}:${POSTGRES_PASSWORD:-egresados_dev}@postgres:5432/${POSTGRES_DB:-egresados}?schema=public
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      REPORTS_STORAGE_DIR: /data/reports
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+    ports:
+      - "${API_PORT:-3001}:3001"
+    volumes:
+      - reports_data:/data/reports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile.worker
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-egresados}:${POSTGRES_PASSWORD:-egresados_dev}@postgres:5432/${POSTGRES_DB:-egresados}?schema=public
+      REDIS_URL: redis://redis:6379
+      REPORTS_STORAGE_DIR: /data/reports
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-3}
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+    volumes:
+      - reports_data:/data/reports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_started
+
+  # --- Perfil desarrollo (bind mount) ---
+  deps:
+    profiles: ["dev"]
+    image: node:20-bookworm-slim
+    working_dir: /workspace
+    env_file:
+      - ../.env
+    environment:
+      PUPPETEER_SKIP_DOWNLOAD: ${PUPPETEER_SKIP_DOWNLOAD:-true}
+    volumes:
+      - ../:/workspace
+      - root_node_modules:/workspace/node_modules
+    command: >
+      sh -c "
+        set -e &&
+        corepack enable &&
+        npm install &&
+        npx prisma generate --schema=apps/api/prisma/schema.prisma
+      "
+
+  api-dev:
+    profiles: ["dev"]
+    image: node:20-bookworm-slim
+    working_dir: /workspace
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: development
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-egresados}:${POSTGRES_PASSWORD:-egresados_dev}@postgres:5432/${POSTGRES_DB:-egresados}?schema=public
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      REPORTS_STORAGE_DIR: /workspace/apps/api/storage/reports
+    volumes:
+      - ../:/workspace
+      - root_node_modules:/workspace/node_modules
+    command: >
+      sh -c "
+        set -e &&
+        corepack enable &&
+        npm run dev -w @egresados/api
+      "
+    ports:
+      - "${API_PORT:-3001}:3001"
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web-dev:
+    profiles: ["dev"]
+    image: node:20-bookworm-slim
+    working_dir: /workspace
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    volumes:
+      - ../:/workspace
+      - root_node_modules:/workspace/node_modules
+    command: >
+      sh -c "
+        set -e &&
+        corepack enable &&
+        npm run dev -w @egresados/web
+      "
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      api-dev:
+        condition: service_started
+
+  worker-dev:
+    profiles: ["dev"]
+    image: node:20-bookworm-slim
+    working_dir: /workspace
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-egresados}:${POSTGRES_PASSWORD:-egresados_dev}@postgres:5432/${POSTGRES_DB:-egresados}?schema=public
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      REPORTS_STORAGE_DIR: /workspace/apps/api/storage/reports
+    volumes:
+      - ../:/workspace
+      - root_node_modules:/workspace/node_modules
+    command: >
+      sh -c "
+        set -e &&
+        corepack enable &&
+        npm run worker -w @egresados/api
+      "
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  reports_data:
+  redis_data:
+  root_node_modules:

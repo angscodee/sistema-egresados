@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  passwordHash   String
+  role           Role
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  lastLogin      DateTime?
+  egresado       Egresado?
+  empresa        Empresa?
+  admin          Administrador?
+  notificaciones Notificacion[]
+  reportes       Reporte[]
+}
+
+enum Role {
+  ADMIN
+  EGRESADO
+  EMPRESA
+}
+
+model Egresado {
+  id                 String              @id
+  user               User                @relation(fields: [id], references: [id], onDelete: Cascade)
+  nombre             String
+  apellido           String
+  dni                String              @unique
+  fechaNacimiento    DateTime?
+  telefono           String?
+  direccion          String?
+  carrera            String?
+  anioEgreso         Int?
+  cvUrl              String?
+  formacionAcademica Json                @default("[]")
+  experienciaLaboral Json                @default("[]")
+  habilidades        EgresadoHabilidad[]
+  postulaciones      Postulacion[]
+}
+
+model Empresa {
+  id                String             @id
+  user              User               @relation(fields: [id], references: [id], onDelete: Cascade)
+  nombreComercial   String
+  razonSocial       String
+  ruc               String             @unique
+  sector            String?
+  sitioWeb          String?
+  descripcion       String?
+  logoUrl           String?
+  estadoValidacion  EstadoValidacion   @default(PENDIENTE)
+  motivoRechazo     String?
+  ofertas           OfertaLaboral[]
+}
+
+enum EstadoValidacion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+model Administrador {
+  id             String @id
+  user           User   @relation(fields: [id], references: [id], onDelete: Cascade)
+  nombreCompleto String
+  area           String?
+}
+
+model Habilidad {
+  id        String              @id @default(uuid())
+  nombre    String              @unique
+  tipo      TipoHabilidad
+  categoria String?
+  egresados EgresadoHabilidad[]
+  ofertas   OfertaHabilidad[]
+}
+
+enum TipoHabilidad {
+  TECNICA
+  BLANDA
+}
+
+model EgresadoHabilidad {
+  egresadoId  String
+  habilidadId String
+  nivel       NivelHabilidad
+  egresado    Egresado  @relation(fields: [egresadoId], references: [id], onDelete: Cascade)
+  habilidad   Habilidad @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
+
+  @@id([egresadoId, habilidadId])
+}
+
+enum NivelHabilidad {
+  BASICO
+  INTERMEDIO
+  AVANZADO
+  EXPERTO
+}
+
+model OfertaLaboral {
+  id               String           @id @default(uuid())
+  empresaId        String
+  empresa          Empresa          @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  titulo           String
+  descripcion      String
+  ubicacion        String?
+  modalidad        Modalidad
+  tipoContrato     TipoContrato
+  salarioMin       Float?
+  salarioMax       Float?
+  fechaPublicacion DateTime         @default(now())
+  fechaCierre      DateTime?
+  estado           EstadoOferta     @default(ACTIVA)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  habilidades      OfertaHabilidad[]
+  postulaciones    Postulacion[]
+}
+
+enum Modalidad {
+  REMOTO
+  HIBRIDO
+  PRESENCIAL
+}
+
+enum TipoContrato {
+  TIEMPO_COMPLETO
+  MEDIO_TIEMPO
+  POR_PROYECTO
+  PRACTICAS
+}
+
+enum EstadoOferta {
+  ACTIVA
+  CERRADA
+  EN_REVISION
+}
+
+model OfertaHabilidad {
+  ofertaId    String
+  habilidadId String
+  requerido   Boolean       @default(true)
+  oferta      OfertaLaboral @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  habilidad   Habilidad     @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
+
+  @@id([ofertaId, habilidadId])
+}
+
+model Postulacion {
+  id         String              @id @default(uuid())
+  ofertaId   String
+  egresadoId String
+  estado     EstadoPostulacion   @default(POSTULADO)
+  comentario String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  oferta     OfertaLaboral       @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  egresado   Egresado            @relation(fields: [egresadoId], references: [id], onDelete: Cascade)
+  historial  HistorialEstado[]
+
+  @@unique([ofertaId, egresadoId])
+}
+
+enum EstadoPostulacion {
+  POSTULADO
+  EN_REVISION
+  ENTREVISTA
+  CONTRATADO
+  RECHAZADO
+}
+
+model HistorialEstado {
+  id             String              @id @default(uuid())
+  postulacionId  String
+  estadoAnterior EstadoPostulacion?
+  estadoNuevo    EstadoPostulacion
+  motivo         String?
+  createdAt      DateTime            @default(now())
+  postulacion    Postulacion         @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+}
+
+model Notificacion {
+  id        String   @id @default(uuid())
+  usuarioId String
+  tipo      String
+  titulo    String
+  contenido String
+  leida     Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+model Reporte {
+  id            String        @id @default(uuid())
+  usuarioId     String
+  tipo          String
+  nombreArchivo String
+  urlArchivo    String?
+  parametros    Json?
+  estado        EstadoReporte @default(PENDIENTE)
+  createdAt     DateTime      @default(now())
+  completedAt   DateTime?
+  usuario       User          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+enum EstadoReporte {
+  PENDIENTE
+  PROCESANDO
+  COMPLETADO
+  FALLIDO
+}
+
+model AuditoriaLog {
+  id           String   @id @default(uuid())
+  usuarioId    String?
+  accion       String
+  entidad      String
+  datosPrevios Json?
+  datosNuevos  Json?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+}
