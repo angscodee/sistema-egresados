@@ -13,7 +13,6 @@
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@egresados/api": "*",
     "@egresados/shared": "*",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-checkbox": "^1.3.3",
