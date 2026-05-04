@@ -9,7 +9,7 @@
 import 'server-only';
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import { cookies } from 'next/headers';
-import type { AppRouter } from '@egresados/api/trpc';
+import type { AppRouter } from '@egresados/api/trpc/types';
 
 function getApiUrl() {
   // In server context use the internal URL (no NEXT_PUBLIC_ prefix needed)

@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && npm install && npm run build --workspace=@egresados/shared && cd apps/web && npx next build",
+  "installCommand": "cd ../.. && npm install",
+  "outputDirectory": ".next"
+}

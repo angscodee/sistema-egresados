@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./trpc": "./src/trpc/router.ts"
+    "./trpc": "./src/trpc/router.ts",
+    "./trpc/types": "./src/trpc/router.types.ts"
   },
   "scripts": {
     "build": "nest build",
