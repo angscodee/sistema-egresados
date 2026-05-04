@@ -13,10 +13,13 @@ function getClient(): Redis | null {
   if (_client) return _client;
   try {
     if (process.env.REDIS_URL?.trim()) {
-      _client = new Redis(process.env.REDIS_URL.trim(), {
+      const url = process.env.REDIS_URL.trim();
+      const tls = url.startsWith('rediss://');
+      _client = new Redis(url, {
         maxRetriesPerRequest: 1,
         enableOfflineQueue: false,
         lazyConnect: true,
+        tls: tls ? {} : undefined,
       });
     } else {
       _client = new Redis({

@@ -1,8 +1,15 @@
 import Redis from 'ioredis';
 
 export function createBullConnection(): Redis {
-  if (process.env.REDIS_URL?.trim()) {
-    return new Redis(process.env.REDIS_URL.trim(), { maxRetriesPerRequest: null });
+  const url = process.env.REDIS_URL?.trim();
+
+  if (url) {
+    // rediss:// (TLS) — required for Upstash and other managed Redis providers
+    const tls = url.startsWith('rediss://');
+    return new Redis(url, {
+      maxRetriesPerRequest: null,
+      tls: tls ? {} : undefined,
+    });
   }
 
   return new Redis({
