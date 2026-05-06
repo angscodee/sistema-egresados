@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const personalSchema = z.object({
   nombre: z.string().min(1, 'Obligatorio').max(120),
@@ -172,17 +172,23 @@ export default function PerfilEgresadoPage() {
 
   function savePersonal(values: PersonalFormValues) {
     if (!user?.id) return;
-    const parsed = personalSchema.parse(values);
+    // react-hook-form + zodResolver already validated and transformed the values
+    // anioEgreso comes as number after transform, or '' if empty
+    const anioEgreso = values.anioEgreso
+      ? typeof values.anioEgreso === 'number'
+        ? values.anioEgreso
+        : Number(values.anioEgreso)
+      : null;
     updateMutation.mutate({
       id: user.id,
       data: {
-        nombre: parsed.nombre,
-        apellido: parsed.apellido,
-        telefono: parsed.telefono || null,
-        direccion: parsed.direccion || null,
-        fechaNacimiento: parsed.fechaNacimiento ? new Date(parsed.fechaNacimiento) : null,
-        carrera: parsed.carrera || null,
-        anioEgreso: parsed.anioEgreso ? (parsed.anioEgreso as number) : null,
+        nombre: values.nombre,
+        apellido: values.apellido,
+        telefono: values.telefono || null,
+        direccion: values.direccion || null,
+        fechaNacimiento: values.fechaNacimiento ? new Date(values.fechaNacimiento) : null,
+        carrera: values.carrera || null,
+        anioEgreso: anioEgreso || null,
       },
     });
   }
@@ -317,8 +323,8 @@ export default function PerfilEgresadoPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={!isDirty || updateMutation.isLoading}>
-                {updateMutation.isLoading ? 'Guardando…' : 'Guardar cambios'}
+              <Button type="submit" disabled={!isDirty || updateMutation.isPending}>
+                {updateMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
               </Button>
             </div>
           </form>

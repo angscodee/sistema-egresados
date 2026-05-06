@@ -14,13 +14,56 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
+  Download,
   ExternalLink,
+  FileText,
   Globe,
+  Loader2,
   MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
+
+function ResumenOfertaButton({ ofertaId }: { ofertaId: string }) {
+  const generarMutation = trpc.reportes.generateDirect.useMutation({
+    onSuccess: (result) => {
+      const url = (result as { urlArchivo: string }).urlArchivo;
+      const absUrl = url.startsWith('http')
+        ? url
+        : `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}${url}`;
+      window.open(absUrl, '_blank');
+      toast.success('PDF generado. Descargando…');
+    },
+    onError: (err) => toast.error(err.message ?? 'Error al generar el reporte.'),
+  });
+
+  return (
+    <Button
+      variant="outline"
+      disabled={generarMutation.isPending}
+      onClick={() =>
+        generarMutation.mutate({
+          tipo: 'resumen_oferta',
+          parametros: { ofertaId },
+        })
+      }
+    >
+      {generarMutation.isPending ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Generando PDF…
+        </>
+      ) : (
+        <>
+          <Download className="mr-2 h-4 w-4" />
+          Descargar resumen
+        </>
+      )}
+    </Button>
+  );
+}
 
 export default function OfertaDetailPage() {
   const { user } = useAuth();
@@ -48,6 +91,15 @@ export default function OfertaDetailPage() {
       void utils.postulaciones.getMisPostulaciones.invalidate();
     },
     onError: (err) => toast.error(err.message ?? 'Error al postular.'),
+  });
+
+  const cerrarMutation = trpc.ofertas.cerrar.useMutation({
+    onSuccess: () => {
+      toast.success('Oferta cerrada correctamente.');
+      void utils.ofertas.findOne.invalidate({ id: params.id });
+      void utils.ofertas.getMisOfertas.invalidate();
+    },
+    onError: (err) => toast.error(err.message ?? 'Error al cerrar la oferta.'),
   });
 
   if (isLoading) {
@@ -97,16 +149,36 @@ export default function OfertaDetailPage() {
               </Button>
             ) : (
               <Button
-                disabled={!isActiva || postularMutation.isLoading}
+                disabled={!isActiva || postularMutation.isPending}
                 onClick={() => postularMutation.mutate({ ofertaId: params.id })}
               >
-                {postularMutation.isLoading ? 'Enviando…' : 'Postular ahora'}
+                {postularMutation.isPending ? 'Enviando…' : 'Postular ahora'}
               </Button>
             )}
             {!isActiva && !yaPostulo && (
               <p className="text-xs text-muted-foreground">Esta oferta ya no acepta postulaciones.</p>
             )}
           </div>
+        )}
+
+        {/* Cerrar oferta — only for the owning EMPRESA */}
+        {user?.role === 'EMPRESA' && oferta.empresa.id === user.id && isActiva && (
+          <Button
+            variant="destructive"
+            disabled={cerrarMutation.isPending}
+            onClick={() => {
+              if (confirm('¿Cerrar esta oferta? Ya no aceptará nuevas postulaciones.')) {
+                cerrarMutation.mutate({ id: params.id });
+              }
+            }}
+          >
+            {cerrarMutation.isPending ? 'Cerrando…' : 'Cerrar oferta'}
+          </Button>
+        )}
+
+        {/* Descargar resumen PDF — for owning EMPRESA on any closed offer */}
+        {user?.role === 'EMPRESA' && oferta.empresa.id === user.id && !isActiva && (
+          <ResumenOfertaButton ofertaId={params.id} />
         )}
       </div>
 
@@ -224,10 +296,10 @@ export default function OfertaDetailPage() {
               {user?.role === 'EGRESADO' && !yaPostulo && isActiva && (
                 <Button
                   className="mt-2 w-full"
-                  disabled={postularMutation.isLoading}
+                  disabled={postularMutation.isPending}
                   onClick={() => postularMutation.mutate({ ofertaId: params.id })}
                 >
-                  {postularMutation.isLoading ? 'Enviando…' : 'Postular ahora'}
+                  {postularMutation.isPending ? 'Enviando…' : 'Postular ahora'}
                 </Button>
               )}
               {user?.role === 'EGRESADO' && yaPostulo && (

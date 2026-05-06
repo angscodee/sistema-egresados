@@ -76,12 +76,17 @@ export function FormacionAcademicaModal({ open, onClose, onSave, initial }: Prop
   }, [open, initial, reset]);
 
   function onSubmit(values: FormValues) {
-    const parsed = schema.parse(values);
+    // react-hook-form + zodResolver already validated and transformed the values
+    // anioInicio/anioFin come as numbers after transform
+    const anioInicio = typeof values.anioInicio === 'number' ? values.anioInicio : Number(values.anioInicio);
+    const anioFin = values.anioFin && values.anioFin !== ''
+      ? typeof values.anioFin === 'number' ? values.anioFin : Number(values.anioFin)
+      : undefined;
     onSave({
-      institucion: parsed.institucion,
-      titulo: parsed.titulo,
-      anioInicio: parsed.anioInicio as number,
-      anioFin: parsed.anioFin ? (parsed.anioFin as number) : undefined,
+      institucion: values.institucion,
+      titulo: values.titulo,
+      anioInicio,
+      anioFin,
     });
     onClose();
   }

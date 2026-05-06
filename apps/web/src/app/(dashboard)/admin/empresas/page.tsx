@@ -202,7 +202,7 @@ export default function AdminEmpresasPage() {
                                   size="icon"
                                   title="Aprobar"
                                   className="text-green-600 hover:text-green-700"
-                                  disabled={validarMutation.isLoading}
+                                  disabled={validarMutation.isPending}
                                   onClick={() => validarMutation.mutate({ id: e.id })}
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
@@ -300,14 +300,14 @@ export default function AdminEmpresasPage() {
             </Button>
             <Button
               variant="destructive"
-              disabled={!motivo.trim() || rechazarMutation.isLoading}
+              disabled={!motivo.trim() || rechazarMutation.isPending}
               onClick={() => {
                 if (rechazarTarget && motivo.trim()) {
                   rechazarMutation.mutate({ id: rechazarTarget.id, motivo: motivo.trim() });
                 }
               }}
             >
-              {rechazarMutation.isLoading ? 'Rechazando…' : 'Rechazar'}
+              {rechazarMutation.isPending ? 'Rechazando…' : 'Rechazar'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -28,6 +28,10 @@ import {
   renderPostulacionesPeriodoReport,
   type PostulacionesPeriodoPdfData,
 } from './templates/postulaciones-periodo.template';
+import {
+  renderResumenOfertaReport,
+  type ResumenOfertaPdfData,
+} from './templates/resumen-oferta.template';
 
 function jsonParams(raw: Prisma.JsonValue | null | undefined): Record<string, string> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -72,7 +76,7 @@ export class ReportesProcessor extends WorkerHost {
         data: { estado: EstadoReporte.PROCESANDO },
       });
 
-      const html = await this.buildHtml(reporte);
+      const html = await this.buildHtmlPublic(reporte);
       const dir = ensureReportsStorageDir();
       const pdfPath = join(dir, `${reportId}.pdf`);
 
@@ -111,7 +115,7 @@ export class ReportesProcessor extends WorkerHost {
     }
   }
 
-  private async buildHtml(reporte: {
+  async buildHtmlPublic(reporte: {
     id: string;
     tipo: string;
     parametros: Prisma.JsonValue | null;
@@ -143,6 +147,10 @@ export class ReportesProcessor extends WorkerHost {
       case 'postulaciones_periodo': {
         const data = await this.loadPostulacionesPeriodoData(params);
         return renderPostulacionesPeriodoReport(data, generatedAt);
+      }
+      case 'resumen_oferta': {
+        const data = await this.loadResumenOfertaData(params);
+        return renderResumenOfertaReport(data, generatedAt);
       }
       default:
         throw new Error(`Tipo de reporte no soportado: ${reporte.tipo}`);
@@ -440,6 +448,73 @@ export class ReportesProcessor extends WorkerHost {
         estado: r.estado,
         fecha: r.createdAt.toLocaleDateString('es'),
       })),
+    };
+  }
+
+  private async loadResumenOfertaData(params: Record<string, string>): Promise<ResumenOfertaPdfData> {
+    const ofertaId = params.ofertaId;
+    if (!ofertaId) throw new Error('Se requiere ofertaId para el reporte resumen_oferta');
+
+    const oferta = await this.prisma.ofertaLaboral.findUnique({
+      where: { id: ofertaId },
+      include: {
+        empresa: { select: { nombreComercial: true } },
+        postulaciones: {
+          include: {
+            egresado: {
+              include: { user: { select: { email: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!oferta) throw new Error(`Oferta no encontrada: ${ofertaId}`);
+
+    // Count by estado
+    const estadoMap = new Map<string, number>();
+    for (const p of oferta.postulaciones) {
+      estadoMap.set(p.estado, (estadoMap.get(p.estado) ?? 0) + 1);
+    }
+    const estadoResumen = [...estadoMap.entries()]
+      .map(([estado, total]) => ({ estado, total }))
+      .sort((a, b) => b.total - a.total);
+
+    const contratados = oferta.postulaciones
+      .filter((p) => p.estado === EstadoPostulacion.CONTRATADO)
+      .map((p) => ({
+        nombre: `${p.egresado.nombre} ${p.egresado.apellido}`.trim(),
+        dni: p.egresado.dni,
+        carrera: p.egresado.carrera?.trim() || '—',
+        anioEgreso: p.egresado.anioEgreso != null ? String(p.egresado.anioEgreso) : '—',
+        telefono: p.egresado.telefono?.trim() || '—',
+        email: p.egresado.user?.email ?? '—',
+      }));
+
+    const total = oferta.postulaciones.length;
+
+    return {
+      oferta: {
+        titulo: oferta.titulo,
+        empresa: oferta.empresa.nombreComercial,
+        modalidad: oferta.modalidad,
+        tipoContrato: oferta.tipoContrato,
+        ubicacion: oferta.ubicacion,
+        salarioMin: oferta.salarioMin,
+        salarioMax: oferta.salarioMax,
+        fechaPublicacion: oferta.fechaPublicacion.toLocaleDateString('es'),
+        fechaCierre: oferta.fechaCierre ? oferta.fechaCierre.toLocaleDateString('es') : null,
+        estado: oferta.estado,
+        descripcion: oferta.descripcion,
+      },
+      kpis: [
+        { label: 'Total postulaciones', value: String(total) },
+        { label: 'Contratados', value: String(contratados.length) },
+        { label: 'Tasa contratación %', value: total === 0 ? '0' : String(Math.round((contratados.length / total) * 10000) / 100) },
+        { label: 'Estado oferta', value: oferta.estado },
+      ],
+      contratados,
+      estadoResumen,
     };
   }
 }

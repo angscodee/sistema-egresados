@@ -106,7 +106,7 @@ function HabilidadModal({
     onError: (err) => toast.error(err.message ?? 'Error al actualizar.'),
   });
 
-  const isLoading = createMutation.isLoading || updateMutation.isLoading;
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   function onSubmit(values: HabilidadFormValues) {
     if (initial) {
@@ -425,10 +425,10 @@ export default function ConfiguracionPage() {
             </Button>
             <Button
               variant="destructive"
-              disabled={deleteMutation.isLoading}
+              disabled={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate({ id: deleteTarget.id })}
             >
-              {deleteMutation.isLoading ? 'Eliminando…' : 'Eliminar'}
+              {deleteMutation.isPending ? 'Eliminando…' : 'Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>

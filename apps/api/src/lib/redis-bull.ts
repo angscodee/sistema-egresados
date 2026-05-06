@@ -8,6 +8,8 @@ export function createBullConnection(): Redis {
     const tls = url.startsWith('rediss://');
     return new Redis(url, {
       maxRetriesPerRequest: null,
+      enableOfflineQueue: false,
+      lazyConnect: true,
       tls: tls ? {} : undefined,
     });
   }
@@ -17,5 +19,7 @@ export function createBullConnection(): Redis {
     port: Number(process.env.REDIS_PORT ?? 6379),
     password: process.env.REDIS_PASSWORD || undefined,
     maxRetriesPerRequest: null,
+    enableOfflineQueue: false,
+    lazyConnect: true,
   });
 }

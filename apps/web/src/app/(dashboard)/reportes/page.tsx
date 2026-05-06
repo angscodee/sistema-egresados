@@ -292,8 +292,8 @@ export default function ReportesPage() {
               </p>
             ) : null}
 
-            <Button type="button" onClick={() => void onGenerar()} disabled={generar.isLoading}>
-              {generar.isLoading ? (
+            <Button type="button" onClick={() => void onGenerar()} disabled={generar.isPending}>
+              {generar.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   Generando…

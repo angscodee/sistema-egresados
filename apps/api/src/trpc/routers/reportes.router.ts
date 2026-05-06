@@ -17,6 +17,14 @@ export const reportesRouter = router({
       ),
     ),
 
+  generateDirect: protectedProcedure
+    .input(generateInput)
+    .mutation(({ ctx, input }) =>
+      withService(() =>
+        ctx.reportes.generateDirect(ctx.user.id, input.tipo, input.parametros as Prisma.InputJsonValue | undefined),
+      ),
+    ),
+
   getReportStatus: protectedProcedure
     .input(z.object({ reportId: z.string().uuid() }))
     .query(({ ctx, input }) =>

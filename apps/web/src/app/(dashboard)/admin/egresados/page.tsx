@@ -306,10 +306,10 @@ export default function AdminEgresadosPage() {
             </Button>
             <Button
               variant="destructive"
-              disabled={deleteMutation.isLoading}
+              disabled={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate({ id: deleteTarget.id })}
             >
-              {deleteMutation.isLoading ? 'Eliminando…' : 'Eliminar'}
+              {deleteMutation.isPending ? 'Eliminando…' : 'Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>

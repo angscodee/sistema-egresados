@@ -46,7 +46,7 @@ export function NotificacionesCampana() {
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs"
-            disabled={unreadCount === 0 || marcarTodasLeidas.isLoading}
+            disabled={unreadCount === 0 || marcarTodasLeidas.isPending}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

@@ -23,7 +23,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const NIVEL_LABELS: Record<string, string> = {
   BASICO: 'Básico',
@@ -308,7 +308,7 @@ export default function EmpresaPostulacionDetallePage() {
               </div>
               <Button
                 className="w-full"
-                disabled={!nuevoEstado || cambiarEstadoMutation.isLoading}
+                disabled={!nuevoEstado || cambiarEstadoMutation.isPending}
                 onClick={() => {
                   if (!nuevoEstado) return;
                   cambiarEstadoMutation.mutate({
@@ -318,7 +318,7 @@ export default function EmpresaPostulacionDetallePage() {
                   });
                 }}
               >
-                {cambiarEstadoMutation.isLoading ? 'Actualizando…' : 'Actualizar estado'}
+                {cambiarEstadoMutation.isPending ? 'Actualizando…' : 'Actualizar estado'}
               </Button>
             </CardContent>
           </Card>

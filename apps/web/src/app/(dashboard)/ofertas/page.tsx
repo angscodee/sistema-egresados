@@ -15,14 +15,16 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { OfertaListItem } from '@/lib/api-types';
+import { useAuth } from '@/lib/auth-context';
 import { trpc } from '@/lib/trpc/client';
-import { Eye } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 const PAGE_SIZE = 10;
 
 export default function OfertasPage() {
+  const { user } = useAuth();
   const [modalidad, setModalidad] = useState<string>('');
   const [tipoContrato, setTipoContrato] = useState<string>('');
   const [salarioMin, setSalarioMin] = useState('');
@@ -51,9 +53,19 @@ export default function OfertasPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Ofertas laborales</h1>
-        <p className="text-muted-foreground">Vacantes publicadas en la plataforma.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Ofertas laborales</h1>
+          <p className="text-muted-foreground">Vacantes publicadas en la plataforma.</p>
+        </div>
+        {user?.role === 'EMPRESA' && (
+          <Button asChild>
+            <Link href="/ofertas/nueva">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva oferta
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>

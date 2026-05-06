@@ -27,12 +27,41 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
+    const email = dto.email.toLowerCase().trim();
+
+    // Derive a display name from the email prefix (e.g. "juan.perez@..." → "Juan Perez")
+    const emailPrefix = email.split('@')[0];
+    const displayName = emailPrefix
+      .replace(/[._-]+/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
 
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email.toLowerCase().trim(),
+        email,
         passwordHash,
         role: dto.role,
+        // Create the role-specific profile automatically
+        ...(dto.role === 'EGRESADO' && {
+          egresado: {
+            create: {
+              nombre: displayName,
+              apellido: '',
+              dni: '',
+              carrera: '',
+              anioEgreso: new Date().getFullYear(),
+            },
+          },
+        }),
+        ...(dto.role === 'EMPRESA' && {
+          empresa: {
+            create: {
+              nombreComercial: displayName,
+              razonSocial: displayName,
+              ruc: '',
+              sector: '',
+            },
+          },
+        }),
       },
       select: {
         id: true,

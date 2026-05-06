@@ -77,13 +77,17 @@ export function ExperienciaLaboralModal({ open, onClose, onSave, initial }: Prop
   }, [open, initial, reset]);
 
   function onSubmit(values: FormValues) {
-    const parsed = schema.parse(values);
+    // react-hook-form + zodResolver already validated and transformed the values
+    const anioInicio = typeof values.anioInicio === 'number' ? values.anioInicio : Number(values.anioInicio);
+    const anioFin = values.anioFin && values.anioFin !== ''
+      ? typeof values.anioFin === 'number' ? values.anioFin : Number(values.anioFin)
+      : undefined;
     onSave({
-      empresa: parsed.empresa,
-      cargo: parsed.cargo,
-      anioInicio: parsed.anioInicio as number,
-      anioFin: parsed.anioFin ? (parsed.anioFin as number) : undefined,
-      descripcion: parsed.descripcion || undefined,
+      empresa: values.empresa,
+      cargo: values.cargo,
+      anioInicio,
+      anioFin,
+      descripcion: values.descripcion || undefined,
     });
     onClose();
   }

@@ -144,7 +144,7 @@ export default function AdminEmpresaDetailPage() {
             <Button
               size="sm"
               className="bg-green-600 hover:bg-green-700"
-              disabled={validarMutation.isLoading}
+              disabled={validarMutation.isPending}
               onClick={() => validarMutation.mutate({ id })}
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -283,14 +283,14 @@ export default function AdminEmpresaDetailPage() {
             </Button>
             <Button
               variant="destructive"
-              disabled={!motivo.trim() || rechazarMutation.isLoading}
+              disabled={!motivo.trim() || rechazarMutation.isPending}
               onClick={() => {
                 if (motivo.trim()) {
                   rechazarMutation.mutate({ id, motivo: motivo.trim() });
                 }
               }}
             >
-              {rechazarMutation.isLoading ? 'Rechazando…' : 'Rechazar'}
+              {rechazarMutation.isPending ? 'Rechazando…' : 'Rechazar'}
             </Button>
           </DialogFooter>
         </DialogContent>

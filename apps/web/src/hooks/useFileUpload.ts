@@ -12,6 +12,12 @@ type UploadState = {
   error: string | null;
 };
 
+function getAuthToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)auth_token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export function useFileUpload({ url, fieldName = 'file', maxSizeMb = 5, accept }: UploadOptions) {
   const [state, setState] = useState<UploadState>({ uploading: false, error: null });
 
@@ -27,7 +33,7 @@ export function useFileUpload({ url, fieldName = 'file', maxSizeMb = 5, accept }
 
     setState({ uploading: true, error: null });
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const token = getAuthToken();
     const formData = new FormData();
     formData.append(fieldName, file);
 

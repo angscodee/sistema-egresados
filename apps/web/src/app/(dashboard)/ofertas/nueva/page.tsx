@@ -188,8 +188,8 @@ export default function NuevaOfertaPage() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={isSubmitting || mutation.isLoading}>
-                {mutation.isLoading ? 'Publicando…' : 'Publicar oferta'}
+              <Button type="submit" disabled={isSubmitting || mutation.isPending}>
+                {mutation.isPending ? 'Publicando…' : 'Publicar oferta'}
               </Button>
               <Button type="button" variant="outline" asChild>
                 <Link href="/ofertas">Cancelar</Link>

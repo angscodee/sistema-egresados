@@ -18,7 +18,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import type { EstadoValidacion } from '@/lib/api-types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const schema = z.object({
   nombreComercial: z.string().min(1, 'Obligatorio').max(200),
@@ -266,8 +266,8 @@ export default function PerfilEmpresaPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={!isDirty || updateMutation.isLoading}>
-                {updateMutation.isLoading ? 'Guardando…' : 'Guardar cambios'}
+              <Button type="submit" disabled={!isDirty || updateMutation.isPending}>
+                {updateMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
               </Button>
             </div>
           </form>
