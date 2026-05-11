@@ -34,6 +34,12 @@ function homeForRole(role: UserRole): string {
   }
 }
 
+const DEMO_CREDENTIALS = [
+  { rol: 'Admin', email: 'admin@example.com', password: 'password123', color: 'bg-violet-50 border-violet-200 hover:bg-violet-100' },
+  { rol: 'Empresa', email: 'empresa@example.com', password: 'password123', color: 'bg-blue-50 border-blue-200 hover:bg-blue-100' },
+  { rol: 'Egresado', email: 'egresado@example.com', password: 'password123', color: 'bg-green-50 border-green-200 hover:bg-green-100' },
+];
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -43,6 +49,7 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -73,34 +80,67 @@ export function LoginForm() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Iniciar sesión</CardTitle>
-        <CardDescription>{APP_NAME}</CardDescription>
-      </CardHeader>
-      <form onSubmit={onSubmit}>
-        <CardContent className="space-y-4">
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo</Label>
-            <Input id="email" type="email" autoComplete="email" {...register('email')} />
-            {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input id="password" type="password" autoComplete="current-password" {...register('password')} />
-            {errors.password ? <p className="text-xs text-destructive">{errors.password.message}</p> : null}
-          </div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Iniciar sesión</CardTitle>
+          <CardDescription>{APP_NAME}</CardDescription>
+        </CardHeader>
+        <form onSubmit={onSubmit}>
+          <CardContent className="space-y-4">
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo</Label>
+              <Input id="email" type="email" autoComplete="email" {...register('email')} />
+              {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input id="password" type="password" autoComplete="current-password" {...register('password')} />
+              {errors.password ? <p className="text-xs text-destructive">{errors.password.message}</p> : null}
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting ? 'Entrando…' : 'Entrar'}
+            </Button>
+            <Button type="button" variant="link" className="px-0" asChild>
+              <Link href="/register">Crear cuenta</Link>
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+
+      {/* Demo credentials */}
+      <Card className="border-dashed">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Credenciales de demo
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Haz clic en un rol para rellenar el formulario automáticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2">
+          {DEMO_CREDENTIALS.map((c) => (
+            <button
+              key={c.rol}
+              type="button"
+              onClick={() => {
+                setValue('email', c.email);
+                setValue('password', c.password);
+              }}
+              className={`flex items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${c.color}`}
+            >
+              <span className="font-medium">{c.rol}</span>
+              <span className="text-xs text-muted-foreground">{c.email}</span>
+            </button>
+          ))}
+          <p className="pt-1 text-center text-xs text-muted-foreground">
+            Contraseña: <span className="font-mono font-medium">password123</span>
+          </p>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isSubmitting ? 'Entrando…' : 'Entrar'}
-          </Button>
-          <Button type="button" variant="link" className="px-0" asChild>
-            <Link href="/register">Crear cuenta</Link>
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+      </Card>
+    </div>
   );
 }
