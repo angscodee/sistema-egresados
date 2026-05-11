@@ -1,8 +1,10 @@
 import { createTRPCReact } from '@trpc/react-query';
+import type { AnyRouter } from '@trpc/server';
+
 // This import is resolved by webpack alias to a zero-dep stub in production.
 // Locally (dev) it resolves to the real AppRouter via tsconfig paths.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AppRouter = any;
+// Using AnyRouter as fallback to preserve tRPC utility methods in production.
+type AppRouter = AnyRouter;
 
 export const trpc = createTRPCReact<AppRouter>();
 
