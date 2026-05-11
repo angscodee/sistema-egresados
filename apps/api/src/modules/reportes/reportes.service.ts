@@ -87,7 +87,7 @@ export class ReportesService {
     const cleanTipo = tipo.trim();
     const reportId = `direct-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    const html = await this.processor.buildHtmlPublic({ id: reportId, tipo: cleanTipo, parametros: parametros ?? null });
+    const html = await this.processor.buildHtmlPublic({ id: reportId, tipo: cleanTipo, parametros: (parametros ?? null) as Prisma.JsonValue | null });
 
     const dir = ensureReportsStorageDir();
     const pdfPath = join(dir, `${reportId}.pdf`);
