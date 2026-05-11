@@ -25,6 +25,15 @@ export const reportesRouter = router({
       ),
     ),
 
+  /** Returns report data as JSON for client-side rendering (no Puppeteer needed) */
+  getReportData: protectedProcedure
+    .input(generateInput)
+    .query(({ ctx, input }) =>
+      withService(() =>
+        ctx.reportes.getReportDataJson(input.tipo, input.parametros as Record<string, string> | undefined),
+      ),
+    ),
+
   getReportStatus: protectedProcedure
     .input(z.object({ reportId: z.string().uuid() }))
     .query(({ ctx, input }) =>

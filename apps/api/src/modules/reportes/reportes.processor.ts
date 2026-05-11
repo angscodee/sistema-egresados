@@ -115,8 +115,28 @@ export class ReportesProcessor extends WorkerHost {
     }
   }
 
-  async buildHtmlPublic(reporte: {
-    id: string;
+  /** Returns raw data for client-side rendering (no Puppeteer needed) */
+  async buildReportData(tipo: string, params: Record<string, string>): Promise<unknown> {
+    switch (tipo) {
+      case 'empleabilidad_resumen':
+        return this.loadEmpleabilidadData();
+      case 'ofertas_activas':
+      case 'demanda_laboral':
+        return this.loadDemandaLaboralData(params);
+      case 'egresados_carrera':
+        return this.loadEgresadosCarreraData(params);
+      case 'comparativo_cohortes':
+        return this.loadComparativoCohortesData();
+      case 'postulaciones_periodo':
+        return this.loadPostulacionesPeriodoData(params);
+      case 'resumen_oferta':
+        return this.loadResumenOfertaData(params);
+      default:
+        throw new Error(`Tipo de reporte no soportado: ${tipo}`);
+    }
+  }
+
+  async buildHtmlPublic(reporte: {    id: string;
     tipo: string;
     parametros: Prisma.JsonValue | null;
   }): Promise<string> {

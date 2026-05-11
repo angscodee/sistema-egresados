@@ -76,9 +76,22 @@ export class ReportesService {
   }
 
   /**
-   * Genera un PDF directamente (sin BullMQ) y devuelve la URL.
-   * Útil cuando Redis no está disponible.
+   * Returns report data as plain JSON for client-side rendering.
+   * No Puppeteer/Chromium needed — the frontend renders and prints.
    */
+  async getReportDataJson(
+    tipo: string,
+    parametros?: Record<string, string>,
+  ): Promise<{ tipo: string; generatedAt: string; data: unknown }> {
+    const params = parametros ?? {};
+    const data = await this.processor.buildReportData(tipo, params);
+    return {
+      tipo,
+      generatedAt: new Date().toISOString(),
+      data,
+    };
+  }
+
   async generateDirect(
     userId: string,
     tipo: string,
