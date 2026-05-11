@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { APP_NAME } from '@egresados/shared';
 
 const loginSchema = z.object({
@@ -45,6 +46,7 @@ export function LoginForm() {
   const params = useSearchParams();
   const { setSession } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [showDemo, setShowDemo] = useState(false);
 
   const {
     register,
@@ -113,33 +115,35 @@ export function LoginForm() {
 
       {/* Demo credentials */}
       <Card className="border-dashed">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Credenciales de demo
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Haz clic en un rol para rellenar el formulario automáticamente.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-2">
-          {DEMO_CREDENTIALS.map((c) => (
-            <button
-              key={c.rol}
-              type="button"
-              onClick={() => {
-                setValue('email', c.email);
-                setValue('password', c.password);
-              }}
-              className={`flex items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${c.color}`}
-            >
-              <span className="font-medium">{c.rol}</span>
-              <span className="text-xs text-muted-foreground">{c.email}</span>
-            </button>
-          ))}
-          <p className="pt-1 text-center text-xs text-muted-foreground">
-            Contraseña: <span className="font-mono font-medium">password123</span>
-          </p>
-        </CardContent>
+        <button
+          type="button"
+          onClick={() => setShowDemo((v) => !v)}
+          className="flex w-full items-center justify-between px-6 py-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>Credenciales de demo</span>
+          {showDemo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {showDemo && (
+          <CardContent className="grid gap-2 pt-0">
+            {DEMO_CREDENTIALS.map((c) => (
+              <button
+                key={c.rol}
+                type="button"
+                onClick={() => {
+                  setValue('email', c.email);
+                  setValue('password', c.password);
+                }}
+                className={`flex items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${c.color}`}
+              >
+                <span className="font-medium">{c.rol}</span>
+                <span className="text-xs text-muted-foreground">{c.email}</span>
+              </button>
+            ))}
+            <p className="pt-1 text-center text-xs text-muted-foreground">
+              Contraseña: <span className="font-mono font-medium">password123</span>
+            </p>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
