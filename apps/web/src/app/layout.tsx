@@ -32,12 +32,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans`}
         suppressHydrationWarning
       >
-        <TRPCProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <TRPCProvider>
             {children}
             <SonnerToaster />
-          </AuthProvider>
-        </TRPCProvider>
+          </TRPCProvider>
+        </AuthProvider>
       </body>
     </html>
   );

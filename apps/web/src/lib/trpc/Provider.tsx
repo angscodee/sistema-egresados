@@ -3,26 +3,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
 import { useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 import { getAuthHeaders, getTrpcUrl, trpc } from './client';
 
-// QueryClient is shared and stable across re-renders
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
+function TRPCClientProvider({ children, userId }: { children: React.ReactNode; userId: string | null }) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+  }));
 
-export function TRPCProvider({ children }: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
         httpBatchLink({
           url: getTrpcUrl(),
           headers() {
-            // Read the auth_token cookie at request time (not at init time)
             const token =
               typeof document !== 'undefined'
                 ? document.cookie
@@ -35,10 +29,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
               : getAuthHeaders();
           },
           fetch(url, options) {
-            return fetch(url, {
-              ...options,
-              credentials: 'include',
-            });
+            return fetch(url, { ...options, credentials: 'include' });
           },
         }),
       ],
@@ -49,5 +40,15 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </trpc.Provider>
+  );
+}
+
+export function TRPCProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  // key forces full remount of the tRPC client when auth state changes
+  return (
+    <TRPCClientProvider key={user?.id ?? 'anonymous'}>
+      {children}
+    </TRPCClientProvider>
   );
 }
